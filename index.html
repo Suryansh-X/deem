@@ -32,7 +32,7 @@
         body {
             background-color: var(--bg-base);
             color: var(--text-main);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.5;
             padding: 40px 20px;
         }
@@ -55,6 +55,7 @@
             margin-top: 8px;
         }
 
+        /* Modern Responsive Grid Layout */
         .roster-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -64,6 +65,7 @@
             margin: 0 auto;
         }
 
+        /* Sleek Modern Cards */
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -102,7 +104,6 @@
             color: var(--text-muted);
             font-size: 0.85rem;
             font-weight: 500;
-            letter-spacing: 0.5px;
         }
 
         .action-container {
@@ -118,7 +119,6 @@
             font-size: 0.875rem;
             border-radius: 8px;
             font-weight: 600;
-            letter-spacing: 0.2px;
             cursor: pointer;
             transition: background 0.2s ease, transform 0.1s ease;
         }
@@ -140,6 +140,7 @@
             font-weight: 500;
         }
 
+        /* Minimal Backdrop Overlay Viewer */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -223,7 +224,6 @@
             font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
-            border-right: 2px solid transparent;
             width: 0;
         }
 
@@ -232,8 +232,7 @@
         }
 
         .matrix-alert-panel.active .line-2 {
-            animation: typing 1s steps(25, end) 1s forwards, blink 0.75s step-end infinite alternate;
-            border-right-color: var(--brand-primary);
+            animation: typing 1s steps(25, end) 1s forwards;
         }
 
         .viewer-viewport {
@@ -247,11 +246,6 @@
         @keyframes typing {
             from { width: 0 }
             to { width: 100% }
-        }
-
-        @keyframes blink {
-            from, to { border-color: transparent }
-            50% { border-color: var(--brand-primary); }
         }
 
         @media (max-width: 900px) {
@@ -301,9 +295,10 @@
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
-        // FIXED: Using window.supabase to avoid naming collision error
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const BUCKET_NAME = 'STUDENTS-RESULT'; 
+        
+        // FIXED: Updated case sensitive name to match bucket configurations
+        const BUCKET_NAME = 'students-result'; 
 
         const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
@@ -335,6 +330,7 @@
             } catch(e) {}
         }
 
+        /* --- AUTOMATICALLY FETCH STORAGE FILES --- */
         async function fetchStorageManifest() {
             try {
                 const { data: files, error } = await supabaseClient.storage
@@ -356,6 +352,7 @@
                 gridTarget.innerHTML = '';
 
                 structuredFiles.forEach(file => {
+                    // Turn "Student-Alpha.pdf" into a beautiful clean title "Student Alpha"
                     const cleanTitle = file.name.replace('.pdf', '').replace(/-/g, ' ');
                     const nodeLabel = file.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
@@ -383,11 +380,9 @@
 
             } catch (err) {
                 console.error("Manifest Listing Failure:", err.message);
-                // UPGRADED ERROR FALLBACK PANEL
                 gridTarget.innerHTML = `
                     <div class="status-msg" style="color: var(--error-main); max-width: 600px; margin: 0 auto; text-align: left;">
                         <p style="font-weight: bold; font-size: 1.3rem; margin-bottom: 10px;">Database Listing Error</p>
-                        <p style="margin-bottom: 15px; color: var(--text-main);">The client script loaded correctly, but Supabase blocked the data retrieval. This usually means your storage policy doesn't explicitly allow public directory scans.</p>
                         <code style="display: block; background: #000; padding: 12px; border-radius: 6px; border: 1px solid var(--border-subtle); color: #ff6b6b; font-family: monospace;">Error Details: ${err.message}</code>
                     </div>`;
             }
@@ -399,7 +394,7 @@
                 activeTriggerElement = cardElement;
                 
                 if (bgMusic.paused) {
-                    bgMusic.play().catch(err => console.log("BGM playback deferred: ", err.message));
+                    bgMusic.play().catch(err => console.log("Autoplay context initialization deferred: ", err.message));
                 }
                 
                 const fileName = cardElement.getAttribute('data-matrix');
@@ -427,7 +422,7 @@
                     
                     mainframeTitle.textContent = `Document Open: ${targetName.toUpperCase()}`;
                     typeLine1.textContent = `Data decryption successful.`;
-                    typeLine2.textContent = `Showing stream profile asset data.`;
+                    typeLine2.textContent = `Showing profile asset data.`;
 
                 } catch (err) {
                     console.error("Storage Access Exception Failure:", err.message);
@@ -468,4 +463,4 @@
         document.addEventListener('DOMContentLoaded', fetchStorageManifest);
     </script>
 </body>
-    </html>
+</html>
