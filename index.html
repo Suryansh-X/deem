@@ -43,7 +43,6 @@
         }
 
         header h1 {
-            color: var(--text-main);
             font-size: 2.25rem;
             font-weight: 800;
             letter-spacing: -0.5px;
@@ -55,7 +54,6 @@
             margin-top: 8px;
         }
 
-        /* Modern Responsive Grid Layout */
         .roster-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -65,7 +63,6 @@
             margin: 0 auto;
         }
 
-        /* Sleek Modern Cards */
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -76,8 +73,7 @@
             justify-content: space-between;
             gap: 24px;
             cursor: pointer;
-            position: relative;
-            transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .card-entry:hover {
@@ -94,16 +90,12 @@
 
         .student-name {
             font-weight: 700;
-            color: var(--text-main);
             font-size: 1.25rem;
-            letter-spacing: -0.2px;
-            word-break: break-word;
         }
 
         .student-id {
             color: var(--text-muted);
             font-size: 0.85rem;
-            font-weight: 500;
         }
 
         .action-container {
@@ -120,27 +112,13 @@
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
+            transition: background 0.2s;
         }
 
         .card-entry:hover .action-tag {
             background: #7dd3fc;
         }
 
-        .action-tag:active {
-            transform: scale(0.96);
-        }
-
-        .status-msg {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: var(--brand-primary);
-            padding: 60px;
-            font-size: 1.15rem;
-            font-weight: 500;
-        }
-
-        /* Minimal Backdrop Overlay Viewer */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -170,14 +148,11 @@
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             padding: 16px 24px;
-            border-bottom: none;
             border-radius: 12px 12px 0 0;
         }
 
         .mainframe-title {
-            color: var(--text-main);
             font-weight: 700;
-            font-size: 1rem;
         }
 
         .close-btn {
@@ -186,17 +161,14 @@
             color: #f87171;
             padding: 6px 16px;
             cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
             font-weight: 600;
             border-radius: 6px;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
         .close-btn:hover {
             background: #ef4444;
             color: #ffffff;
-            border-color: #ef4444;
         }
 
         .terminal-workspace {
@@ -204,17 +176,14 @@
             flex: 1;
             border: 1px solid var(--border-subtle);
             background: #000000;
-            overflow: hidden;
             border-radius: 0 0 12px 12px;
+            overflow: hidden;
         }
 
         .matrix-alert-panel {
             width: 320px;
             border-right: 1px solid var(--border-subtle);
             padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
             background: var(--bg-surface);
         }
 
@@ -227,38 +196,20 @@
             width: 0;
         }
 
-        .matrix-alert-panel.active .line-1 {
-            animation: typing 1s steps(25, end) forwards;
-        }
-
-        .matrix-alert-panel.active .line-2 {
-            animation: typing 1s steps(25, end) 1s forwards;
-        }
+        .matrix-alert-panel.active .line-1 { animation: typing 1s forwards; }
+        .matrix-alert-panel.active .line-2 { animation: typing 1s 1s forwards; }
 
         .viewer-viewport {
             flex: 1;
             background: #ffffff;
             border: none;
-            height: 100%;
-            width: 100%;
         }
 
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
+        @keyframes typing { to { width: 100% } }
 
         @media (max-width: 900px) {
-            .terminal-workspace {
-                flex-direction: column;
-            }
-            .matrix-alert-panel {
-                width: 100%;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border-subtle);
-                padding: 20px;
-            }
+            .terminal-workspace { flex-direction: column; }
+            .matrix-alert-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); }
         }
     </style>
 </head>
@@ -273,21 +224,43 @@
         <div class="subtitle">Select any individual student file card below to fetch records directly from storage vaults.</div>
     </header>
 
-    <main id="gridTarget" class="roster-grid" aria-live="polite">
-        <div class="status-msg">Scanning active storage volumes...</div>
+    <main class="roster-grid">
+        <div class="card-entry" role="button" tabindex="0" data-matrix="student1.pdf" data-id="student_alpha">
+            <div class="student-info">
+                <span class="student-name">Student Alpha</span>
+                <span class="student-id">FILE ID: #7701</span>
+            </div>
+            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
+        </div>
+
+        <div class="card-entry" role="button" tabindex="0" data-matrix="student2.pdf" data-id="student_beta">
+            <div class="student-info">
+                <span class="student-name">Student Beta</span>
+                <span class="student-id">FILE ID: #7702</span>
+            </div>
+            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
+        </div>
+
+        <div class="card-entry" role="button" tabindex="0" data-matrix="student3.pdf" data-id="student_gamma">
+            <div class="student-info">
+                <span class="student-name">Student Gamma</span>
+                <span class="student-id">FILE ID: #7703</span>
+            </div>
+            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
+        </div>
     </main>
 
-    <div id="hudOverlay" class="hud-overlay" role="dialog" aria-modal="true" aria-labelledby="mainframeTitle">
+    <div id="hudOverlay" class="hud-overlay" role="dialog" aria-modal="true">
         <div class="terminal-header">
             <div id="mainframeTitle" class="mainframe-title">Documents Vault</div>
-            <button id="closeFrameBtn" class="close-btn" aria-label="Close document panel">Close Panel</button>
+            <button id="closeFrameBtn" class="close-btn">Close Panel</button>
         </div>
         <div class="terminal-workspace">
             <div id="matrixAlert" class="matrix-alert-panel">
                 <div id="typeLine1" class="typing-line line-1">Connecting to server...</div>
                 <div id="typeLine2" class="typing-line line-2">Fetching file contents...</div>
             </div>
-            <iframe id="coreViewer" class="viewer-viewport" src="" title="Document Viewer"></iframe>
+            <iframe id="coreViewer" class="viewer-viewport" title="Document Viewer"></iframe>
         </div>
     </div>
 
@@ -296,11 +269,9 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // FIXED: Updated case sensitive name to match bucket configurations
-        const BUCKET_NAME = 'students-result'; 
+        const BUCKET_NAME = 'STUDENTS-RESULT'; 
 
-        const gridTarget = document.getElementById('gridTarget');
+        const cards = document.querySelectorAll('.card-entry');
         const hudOverlay = document.getElementById('hudOverlay');
         const coreViewer = document.getElementById('coreViewer');
         const closeFrameBtn = document.getElementById('closeFrameBtn');
@@ -312,103 +283,22 @@
 
         let activeTriggerElement = null;
 
-        function triggerAudioChime() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1);
-            } catch(e) {}
-        }
-
-        /* --- AUTOMATICALLY FETCH STORAGE FILES --- */
-        async function fetchStorageManifest() {
-            try {
-                const { data: files, error } = await supabaseClient.storage
-                    .from(BUCKET_NAME)
-                    .list('', {
-                        limit: 100,
-                        sortBy: { column: 'name', order: 'asc' }
-                    });
-
-                if (error) throw error;
-
-                const structuredFiles = files.filter(f => f.name !== '.emptyFolderPlaceholder');
-
-                if (structuredFiles.length === 0) {
-                    gridTarget.innerHTML = `<div class="status-msg" style="color: var(--error-main);">No student record manifests found in database folder storage.</div>`;
-                    return;
-                }
-
-                gridTarget.innerHTML = '';
-
-                structuredFiles.forEach(file => {
-                    // Turn "Student-Alpha.pdf" into a beautiful clean title "Student Alpha"
-                    const cleanTitle = file.name.replace('.pdf', '').replace(/-/g, ' ');
-                    const nodeLabel = file.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                    const card = document.createElement('div');
-                    card.className = 'card-entry';
-                    card.setAttribute('role', 'button');
-                    card.setAttribute('tabindex', '0');
-                    card.setAttribute('data-matrix', file.name);
-                    card.setAttribute('data-id', nodeLabel);
-                    card.setAttribute('aria-label', `View records for ${cleanTitle}`);
-
-                    card.innerHTML = `
-                        <div class="student-info">
-                            <span class="student-name">${cleanTitle}</span>
-                            <span class="student-id">FILE ID: #${Math.floor(1000 + Math.random() * 9000)}</span>
-                        </div>
-                        <div class="action-container">
-                            <button class="action-tag" tabindex="-1">View Profile</button>
-                        </div>
-                    `;
-
-                    bindCardEvents(card);
-                    gridTarget.appendChild(card);
-                });
-
-            } catch (err) {
-                console.error("Manifest Listing Failure:", err.message);
-                gridTarget.innerHTML = `
-                    <div class="status-msg" style="color: var(--error-main); max-width: 600px; margin: 0 auto; text-align: left;">
-                        <p style="font-weight: bold; font-size: 1.3rem; margin-bottom: 10px;">Database Listing Error</p>
-                        <code style="display: block; background: #000; padding: 12px; border-radius: 6px; border: 1px solid var(--border-subtle); color: #ff6b6b; font-family: monospace;">Error Details: ${err.message}</code>
-                    </div>`;
-            }
-        }
-
-        function bindCardEvents(cardElement) {
+        cards.forEach(card => {
             const runSelection = async () => {
-                triggerAudioChime();
-                activeTriggerElement = cardElement;
+                activeTriggerElement = card;
+                if (bgMusic.paused) { bgMusic.play().catch(() => {}); }
                 
-                if (bgMusic.paused) {
-                    bgMusic.play().catch(err => console.log("Autoplay context initialization deferred: ", err.message));
-                }
-                
-                const fileName = cardElement.getAttribute('data-matrix');
-                const targetName = cardElement.getAttribute('data-id');
+                const fileName = card.getAttribute('data-matrix');
+                const targetName = card.getAttribute('data-id');
 
                 matrixAlert.classList.remove('active');
                 void matrixAlert.offsetWidth; 
 
                 mainframeTitle.textContent = `Connecting...`;
-                typeLine1.textContent = `Validating request keys...`;
-                typeLine2.textContent = `Parsing remote directory structure...`;
+                typeLine1.textContent = `Accessing secure vault...`;
+                typeLine2.textContent = `Streaming document stream...`;
                 hudOverlay.classList.add('visible');
                 matrixAlert.classList.add('active');
-                closeFrameBtn.focus();
 
                 try {
                     const { data, error } = await supabaseClient.storage
@@ -419,48 +309,27 @@
 
                     const blobUrl = URL.createObjectURL(data);
                     coreViewer.src = blobUrl;
-                    
                     mainframeTitle.textContent = `Document Open: ${targetName.toUpperCase()}`;
-                    typeLine1.textContent = `Data decryption successful.`;
-                    typeLine2.textContent = `Showing profile asset data.`;
 
                 } catch (err) {
-                    console.error("Storage Access Exception Failure:", err.message);
                     mainframeTitle.textContent = `Access Failed`;
-                    typeLine1.textContent = `Connection handshake failure.`;
-                    typeLine2.textContent = `Check your storage custom policy setup.`;
-                    coreViewer.src = ""; 
+                    typeLine1.textContent = `File execution blocked.`;
+                    typeLine2.textContent = `Ensure "${fileName}" is in your bucket.`;
                 }
             };
 
-            cardElement.addEventListener('click', runSelection);
-            cardElement.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    runSelection();
-                }
-            });
-        }
+            card.addEventListener('click', runSelection);
+            card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); runSelection(); } });
+        });
 
         function clearSession() {
             hudOverlay.classList.remove('visible');
             matrixAlert.classList.remove('active');
-            setTimeout(() => {
-                coreViewer.src = "";
-                mainframeTitle.textContent = "Session: Idle";
-                if (activeTriggerElement) activeTriggerElement.focus();
-            }, 400); 
+            setTimeout(() => { coreViewer.src = ""; if (activeTriggerElement) activeTriggerElement.focus(); }, 400); 
         }
 
         closeFrameBtn.addEventListener('click', clearSession);
-        
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && hudOverlay.classList.contains('visible')) {
-                clearSession();
-            }
-        });
-        
-        document.addEventListener('DOMContentLoaded', fetchStorageManifest);
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hudOverlay.classList.contains('visible')) clearSession(); });
     </script>
 </body>
 </html>
