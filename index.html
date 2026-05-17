@@ -18,7 +18,6 @@
             --error-main: #f87171;
         }
 
-        /* Standard accessible reset focus */
         *:focus-visible {
             outline: 3px solid var(--brand-primary);
             outline-offset: 4px;
@@ -56,7 +55,6 @@
             margin-top: 8px;
         }
 
-        /* Modernized Dashboard Grid Layout */
         .roster-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -66,7 +64,6 @@
             margin: 0 auto;
         }
 
-        /* Modern Action Cards */
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -134,7 +131,6 @@
             transform: scale(0.96);
         }
 
-        /* Status & Loading States */
         .status-msg {
             grid-column: 1 / -1;
             text-align: center;
@@ -144,7 +140,6 @@
             font-weight: 500;
         }
 
-        /* Premium Minimal HUD Overlay */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -167,7 +162,6 @@
             pointer-events: auto;
         }
 
-        /* Top Control Ribbon */
         .terminal-header {
             display: flex;
             justify-content: space-between;
@@ -204,7 +198,6 @@
             border-color: #ef4444;
         }
 
-        /* Clean Two-Column Screen Layout */
         .terminal-workspace {
             display: flex;
             flex: 1;
@@ -214,7 +207,6 @@
             border-radius: 0 0 12px 12px;
         }
 
-        /* Status Logs Side Board */
         .matrix-alert-panel {
             width: 320px;
             border-right: 1px solid var(--border-subtle);
@@ -235,7 +227,6 @@
             width: 0;
         }
 
-        /* Typewriter Animation Classes */
         .matrix-alert-panel.active .line-1 {
             animation: typing 1s steps(25, end) forwards;
         }
@@ -245,7 +236,6 @@
             border-right-color: var(--brand-primary);
         }
 
-        /* Document Display Frame */
         .viewer-viewport {
             flex: 1;
             background: #ffffff;
@@ -308,14 +298,13 @@
     </div>
 
     <script>
-        /* --- SUPABASE CONNECTIVITY CONFIGURATION --- */
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // FIXED: Using window.supabase to avoid naming collision error
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const BUCKET_NAME = 'STUDENTS-RESULT'; 
 
-        /* --- INTERFACE LOGIC SELECTORS --- */
         const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
         const coreViewer = document.getElementById('coreViewer');
@@ -326,10 +315,8 @@
         const typeLine2 = document.getElementById('typeLine2');
         const bgMusic = document.getElementById('bgMusic');
 
-        // Focused tracking variable for restoring keyboard control on dismissals
         let activeTriggerElement = null;
 
-        // Safe Audio Context Generator for Sound Triggers
         function triggerAudioChime() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -337,7 +324,7 @@
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Smoother, clean acoustic tone
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
                 gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
                 
                 oscillator.connect(gainNode);
@@ -348,10 +335,9 @@
             } catch(e) {}
         }
 
-        /* --- STEP 1: AUTOMATICALLY FETCH ALL STORAGE FILES --- */
         async function fetchStorageManifest() {
             try {
-                const { data: files, error } = await supabase.storage
+                const { data: files, error } = await supabaseClient.storage
                     .from(BUCKET_NAME)
                     .list('', {
                         limit: 100,
@@ -369,7 +355,6 @@
 
                 gridTarget.innerHTML = '';
 
-                // Step 2: Loop files array and inject card configurations
                 structuredFiles.forEach(file => {
                     const cleanTitle = file.name.replace('.pdf', '').replace(/-/g, ' ');
                     const nodeLabel = file.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -392,18 +377,22 @@
                         </div>
                     `;
 
-                    // Bind mouse and keyboard listeners to ensure accessibility compliance
                     bindCardEvents(card);
                     gridTarget.appendChild(card);
                 });
 
             } catch (err) {
                 console.error("Manifest Listing Failure:", err.message);
-                gridTarget.innerHTML = `<div class="status-msg" style="color: var(--error-main);">Failed to read storage layout parameters.<br>${err.message}</div>`;
+                // UPGRADED ERROR FALLBACK PANEL
+                gridTarget.innerHTML = `
+                    <div class="status-msg" style="color: var(--error-main); max-width: 600px; margin: 0 auto; text-align: left;">
+                        <p style="font-weight: bold; font-size: 1.3rem; margin-bottom: 10px;">Database Listing Error</p>
+                        <p style="margin-bottom: 15px; color: var(--text-main);">The client script loaded correctly, but Supabase blocked the data retrieval. This usually means your storage policy doesn't explicitly allow public directory scans.</p>
+                        <code style="display: block; background: #000; padding: 12px; border-radius: 6px; border: 1px solid var(--border-subtle); color: #ff6b6b; font-family: monospace;">Error Details: ${err.message}</code>
+                    </div>`;
             }
         }
 
-        /* --- STEP 3: INTERACTION LOGIC FOR ACCESSIBLE CARDS --- */
         function bindCardEvents(cardElement) {
             const runSelection = async () => {
                 triggerAudioChime();
@@ -424,10 +413,10 @@
                 typeLine2.textContent = `Parsing remote directory structure...`;
                 hudOverlay.classList.add('visible');
                 matrixAlert.classList.add('active');
-                closeFrameBtn.focus(); // Shift focus inside modal panel context for screen readers
+                closeFrameBtn.focus();
 
                 try {
-                    const { data, error } = await supabase.storage
+                    const { data, error } = await supabaseClient.storage
                         .from(BUCKET_NAME)
                         .download(fileName);
 
@@ -458,20 +447,18 @@
             });
         }
 
-        /* --- DISCONNECT INTERFACE LAYER --- */
         function clearSession() {
             hudOverlay.classList.remove('visible');
             matrixAlert.classList.remove('active');
             setTimeout(() => {
                 coreViewer.src = "";
                 mainframeTitle.textContent = "Session: Idle";
-                if (activeTriggerElement) activeTriggerElement.focus(); // Restore key focus back seamlessly
+                if (activeTriggerElement) activeTriggerElement.focus();
             }, 400); 
         }
 
         closeFrameBtn.addEventListener('click', clearSession);
         
-        // Escape key dismisses overlay framework safely
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && hudOverlay.classList.contains('visible')) {
                 clearSession();
@@ -482,4 +469,3 @@
     </script>
 </body>
     </html>
-    
