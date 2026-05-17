@@ -54,6 +54,7 @@
             margin-top: 8px;
         }
 
+        /* Fluid Responsive Grid Layout */
         .roster-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -63,6 +64,7 @@
             margin: 0 auto;
         }
 
+        /* Clean High-End Premium Matrix UI Card Design */
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -73,7 +75,8 @@
             justify-content: space-between;
             gap: 24px;
             cursor: pointer;
-            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .card-entry:hover {
@@ -91,11 +94,14 @@
         .student-name {
             font-weight: 700;
             font-size: 1.25rem;
+            text-transform: capitalize;
+            word-break: break-word;
         }
 
         .student-id {
             color: var(--text-muted);
             font-size: 0.85rem;
+            font-family: monospace;
         }
 
         .action-container {
@@ -119,6 +125,16 @@
             background: #7dd3fc;
         }
 
+        .status-msg {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--brand-primary);
+            padding: 60px;
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+
+        /* Overlay Viewer Component Layout */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -221,33 +237,11 @@
 
     <header>
         <h1>Student Results Dashboard</h1>
-        <div class="subtitle">Select any individual student file card below to fetch records directly from storage vaults.</div>
+        <div class="subtitle">Select a record layout module card below to map document profiles from data storage safely.</div>
     </header>
 
-    <main class="roster-grid">
-        <div class="card-entry" role="button" tabindex="0" data-matrix="student1.pdf" data-id="student_alpha">
-            <div class="student-info">
-                <span class="student-name">Student Alpha</span>
-                <span class="student-id">FILE ID: #7701</span>
-            </div>
-            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
-        </div>
-
-        <div class="card-entry" role="button" tabindex="0" data-matrix="student2.pdf" data-id="student_beta">
-            <div class="student-info">
-                <span class="student-name">Student Beta</span>
-                <span class="student-id">FILE ID: #7702</span>
-            </div>
-            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
-        </div>
-
-        <div class="card-entry" role="button" tabindex="0" data-matrix="student3.pdf" data-id="student_gamma">
-            <div class="student-info">
-                <span class="student-name">Student Gamma</span>
-                <span class="student-id">FILE ID: #7703</span>
-            </div>
-            <div class="action-container"><button class="action-tag" tabindex="-1">View Profile</button></div>
-        </div>
+    <main id="gridTarget" class="roster-grid" aria-live="polite">
+        <div class="status-msg">Scanning active storage volumes...</div>
     </main>
 
     <div id="hudOverlay" class="hud-overlay" role="dialog" aria-modal="true">
@@ -269,9 +263,9 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const BUCKET_NAME = 'STUDENTS-RESULT'; 
+        const BUCKET_NAME = 'students-result'; 
 
-        const cards = document.querySelectorAll('.card-entry');
+        const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
         const coreViewer = document.getElementById('coreViewer');
         const closeFrameBtn = document.getElementById('closeFrameBtn');
@@ -283,20 +277,111 @@
 
         let activeTriggerElement = null;
 
-        cards.forEach(card => {
+        function renderCards(filesArray) {
+            gridTarget.innerHTML = '';
+            filesArray.forEach(file => {
+                // Strips extensions, downcases for lookups, replaces spaces safely
+                const cleanTitle = file.name.replace('.pdf', '').replace('.PDF', '').replace(/-/g, ' ').replace(/_/g, ' ').toLowerCase();
+                const nodeLabel = file.name.replace(/[^a-zA-Z0-9]/g, '_');
+
+                const card = document.createElement('div');
+                card.className = 'card-entry';
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('data-matrix', file.name);
+                card.setAttribute('data-id', nodeLabel);
+
+                card.innerHTML = `
+                    <div class="student-info">
+                        <span class="student-name">${cleanTitle}</span>
+                        <span class="student-id">SYSTEM VAULT RECORD</span>
+                    </div>
+                    <div class="action-container">
+                        <button class="action-tag" tabindex="-1">View Profile</button>
+                    </div>
+                `;
+                bindCardEvents(card);
+                gridTarget.appendChild(card);
+            });
+        }
+
+        async function fetchStorageManifest() {
+            try {
+                const { data: files, error } = await supabaseClient.storage
+                    .from(BUCKET_NAME)
+                    .list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+
+                if (error) throw error;
+
+                const structuredFiles = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+                if (structuredFiles.length === 0) {
+                    useFallbackList();
+                    return;
+                }
+
+                renderCards(structuredFiles);
+
+            } catch (err) {
+                console.warn("Directory auto scanning policy restricted. Activating fallback mapping index structure.", err.message);
+                useFallbackList();
+            }
+        }
+
+        // EXACT NAMES POPULATED FROM YOUR SNAPSHOT IMAGES (All properly capitalized to ensure perfect lookups)
+        function useFallbackList() {
+            const explicitUserFiles = [
+                { name: 'AALEKH.pdf' },
+                { name: 'AKSHIT.pdf' },
+                { name: 'ANIRUDH VIJ.pdf' },
+                { name: 'ARMAN.pdf' },
+                { name: 'DHARUN.pdf' },
+                { name: 'GAURY.pdf' },
+                { name: 'GURLEEN K.pdf' },
+                { name: 'GURNOOR.pdf' },
+                { name: 'HARSHOUN.pdf' },
+                { name: 'HARTEJ.pdf' },
+                { name: 'HEYMAN.pdf' },
+                { name: 'ISH KAUR.pdf' },
+                { name: 'ISH SINGH.pdf' },
+                { name: 'JAPNEET.pdf' },
+                { name: 'JASKARAN.pdf' },
+                { name: 'JASWINDERK.pdf' },
+                { name: 'MOULI.pdf' },
+                { name: 'PRAB - FAT.pdf' },
+                { name: 'PRAB - ATHLETE.pdf' },
+                { name: 'RAGHUNANDAN.pdf' },
+                { name: 'RANTESH.pdf' },
+                { name: 'ROHAAN SAINI.pdf' },
+                { name: 'ROHANPREET.pdf' },
+                { name: 'SACHIN.pdf' },
+                { name: 'SAMIK.pdf' },
+                { name: 'SANIKA.pdf' },
+                { name: 'SHAVETA.pdf' },
+                { name: 'SHEFALI.pdf' },
+                { name: 'SUKHNOOR.pdf' },
+                { name: 'SURYANSH.pdf' },
+                { name: 'TANVEER.pdf' },
+                { name: 'THAKUR ADITYA RANA.pdf' },
+                { name: 'UDAY OHRI.pdf' }
+            ];
+            renderCards(explicitUserFiles);
+        }
+
+        function bindCardEvents(cardElement) {
             const runSelection = async () => {
-                activeTriggerElement = card;
+                activeTriggerElement = cardElement;
                 if (bgMusic.paused) { bgMusic.play().catch(() => {}); }
                 
-                const fileName = card.getAttribute('data-matrix');
-                const targetName = card.getAttribute('data-id');
+                const fileName = cardElement.getAttribute('data-matrix');
+                const targetName = cardElement.getAttribute('data-id');
 
                 matrixAlert.classList.remove('active');
                 void matrixAlert.offsetWidth; 
 
                 mainframeTitle.textContent = `Connecting...`;
-                typeLine1.textContent = `Accessing secure vault...`;
-                typeLine2.textContent = `Streaming document stream...`;
+                typeLine1.textContent = `Validating unique security identifiers...`;
+                typeLine2.textContent = `Streaming file buffers safely...`;
                 hudOverlay.classList.add('visible');
                 matrixAlert.classList.add('active');
 
@@ -313,14 +398,15 @@
 
                 } catch (err) {
                     mainframeTitle.textContent = `Access Failed`;
-                    typeLine1.textContent = `File execution blocked.`;
-                    typeLine2.textContent = `Ensure "${fileName}" is in your bucket.`;
+                    typeLine1.textContent = `File request initialization broke.`;
+                    typeLine2.textContent = `Verify item "${fileName}" exists natively inside storage.`;
+                    coreViewer.src = "";
                 }
             };
 
-            card.addEventListener('click', runSelection);
-            card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); runSelection(); } });
-        });
+            cardElement.addEventListener('click', runSelection);
+            cardElement.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); runSelection(); } });
+        }
 
         function clearSession() {
             hudOverlay.classList.remove('visible');
@@ -330,6 +416,8 @@
 
         closeFrameBtn.addEventListener('click', clearSession);
         window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hudOverlay.classList.contains('visible')) clearSession(); });
+        document.addEventListener('DOMContentLoaded', fetchStorageManifest);
     </script>
 </body>
-</html>
+    </html>
+    
