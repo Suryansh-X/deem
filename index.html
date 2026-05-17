@@ -238,6 +238,10 @@
 </head>
 <body>
 
+    <audio id="bgMusic" loop preload="auto">
+        <source src="Senorita __ Zindagi Na Milegi Dobara __ Cello Instrumental Cover __ wwwsoundspiritin.mp3" type="audio/mpeg">
+    </audio>
+
     <header>
         <h1>Secure Matrix Node // Results</h1>
         <div class="subtitle">Select a target parameters profile row terminal to decode documentation stream</div>
@@ -288,9 +292,9 @@
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
-        // Initialize Client Interface
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const BUCKET_NAME = 'STUDENTS-RESULT'; // Upper-case to match database custom policy perfectly
+        // Fix 1: Correct library initialization variable scope
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const BUCKET_NAME = 'STUDENTS-RESULT'; 
 
         /* --- INTERFACE LOGIC SELECTORS --- */
         const rows = document.querySelectorAll('.row-entry');
@@ -301,6 +305,7 @@
         const matrixAlert = document.getElementById('matrixAlert');
         const typeLine1 = document.getElementById('typeLine1');
         const typeLine2 = document.getElementById('typeLine2');
+        const bgMusic = document.getElementById('bgMusic');
 
         // Safe Audio Context Generator for Sound Triggers
         function triggerAudioChime() {
@@ -318,9 +323,7 @@
                 
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.15);
-            } catch(e) {
-                // Audio context blocked by browser until initial user engagement
-            }
+            } catch(e) {}
         }
 
         /* --- INTERACTION HANDLER --- */
@@ -328,47 +331,40 @@
             row.addEventListener('click', async () => {
                 triggerAudioChime();
                 
+                if (bgMusic.paused) {
+                    bgMusic.play().catch(err => console.log("BGM playback waiting for user action: ", err.message));
+                }
+                
                 const fileName = row.getAttribute('data-matrix');
                 const targetName = row.getAttribute('data-id');
 
-                // Clear layout animation loops first to allow full re-triggering
-                matrixAlert.classList.remove('active');
-                void matrixAlert.offsetWidth; // Force DOM browser layout reflow
+                // Fix 2: Force HUD overlay visible instantly before network await delays
+                mainframeTitle.textContent = `Connecting...`;
+                typeLine1.textContent = `INITIALIZING ROUTING PASS...`;
+                typeLine2.textContent = `REQUESTING ACCESS KEYS...`;
+                hudOverlay.classList.add('visible');
+                matrixAlert.classList.add('active');
 
                 try {
-                    // Step 1: Force download raw stream blob using anon authorization policy token clearance
                     const { data, error } = await supabase.storage
                         .from(BUCKET_NAME)
                         .download(fileName);
 
                     if (error) throw error;
 
-                    // Step 2: Extract raw bytes data straight into a temporary secure local browser execution object
                     const blobUrl = URL.createObjectURL(data);
-
-                    // Step 3: Inject stream local URL straight into preview window layout frameset
                     coreViewer.src = blobUrl;
                     
-                    // Step 4: Run diagnostic text strings changes
                     mainframeTitle.textContent = `Session: Secure // Node: ${targetName.toUpperCase()}`;
                     typeLine1.textContent = `DECRYPTING LOCAL DATA STREAM...`;
                     typeLine2.textContent = `WELCOME, OPERATOR: ${targetName.toUpperCase()}`;
 
-                    // Step 5: Toggle UI classes to fire transition layers and typewriter code loops
-                    hudOverlay.classList.add('visible');
-                    matrixAlert.classList.add('active');
-
                 } catch (err) {
                     console.error("Storage Access Exception Failure:", err.message);
-                    
-                    // Fallback Text values to render errors cleanly within the UI styling
                     mainframeTitle.textContent = `Session: Failed`;
                     typeLine1.textContent = `ERROR // CRITICAL CONNECTION TERMINATED`;
-                    typeLine2.textContent = `STATUS: FILE UNREADABLE OR BOUNDS EXCEEDED.`;
-                    
-                    coreViewer.src = ""; // Flush broken stream links
-                    hudOverlay.classList.add('visible');
-                    matrixAlert.classList.add('active');
+                    typeLine2.textContent = `STATUS: CHECK SUPABASE BUCKET POLICY OVERRIDE.`;
+                    coreViewer.src = ""; 
                 }
             });
         });
@@ -389,4 +385,5 @@
         });
     </script>
 </body>
-</html>
+    </html>
+    
