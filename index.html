@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassMatrix // Student Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --matrix-green: #00ff66;
+            --matrix-dark-green: #003311;
+            --bg-black: #0a0a0a;
+            --panel-bg: #141414;
+            --border-color: #222222;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--matrix-green);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--matrix-green);
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Roster Table Styles */
+        .roster-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            border: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .row-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .row-entry:last-child {
+            border-bottom: none;
+        }
+
+        .row-entry:hover {
+            background: var(--matrix-dark-green);
+            border-color: var(--matrix-green);
+            padding-left: 25px;
+        }
+
+        .student-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .student-name {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.1rem;
+        }
+
+        .student-id {
+            color: #666666;
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        .row-entry:hover .student-id {
+            color: var(--matrix-green);
+        }
+
+        .action-tag {
+            color: var(--matrix-green);
+            border: 1px solid var(--matrix-green);
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Fullscreen Terminal HUD Overlay */
+        .hud-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+
+        .hud-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Top Bar of Viewer Terminal */
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            border: 1px solid var(--matrix-green);
+            padding: 10px 20px;
+            border-bottom: none;
+        }
+
+        .mainframe-title {
+            color: var(--matrix-green);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: 1px solid #ff3333;
+            color: #ff3333;
+            padding: 3px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #ff3333;
+            color: #000000;
+        }
+
+        /* Main Screen Container split: left text logs, right PDF frame */
+        .terminal-workspace {
+            display: flex;
+            flex: 1;
+            border: 1px solid var(--matrix-green);
+            background: #000000;
+            overflow: hidden;
+        }
+
+        /* Side Terminal Logs & Typing Alerts */
+        .matrix-alert-panel {
+            width: 300px;
+            border-right: 1px solid var(--matrix-green);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #050505;
+        }
+
+        .typing-line {
+            color: var(--matrix-green);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid transparent;
+            width: 0;
+        }
+
+        /* Trigger Typewriter Animations when Active */
+        .matrix-alert-panel.active .line-1 {
+            animation: typing 1.5s steps(30, end) forwards;
+        }
+
+        .matrix-alert-panel.active .line-2 {
+            animation: typing 1.5s steps(30, end) 1.5s forwards, blink 0.75s step-end infinite alternate;
+            border-right-color: var(--matrix-green);
+        }
+
+        /* Document Display Frame */
+        .viewer-viewport {
+            flex: 1;
+            background: #ffffff;
+            border: none;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Keyframes for CSS Typewriter effects */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: var(--matrix-green); }
+        }
+
+        @media (max-width: 768px) {
+            .terminal-workspace {
+                flex-direction: column;
+            }
+            .matrix-alert-panel {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--matrix-green);
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Secure Matrix Node // Results</h1>
+        <div class="subtitle">Select a target parameters profile row terminal to decode documentation stream</div>
+    </header>
+
+    <main class="roster-container">
+        <div class="row-entry" data-matrix="student1.pdf" data-id="stu_alpha">
+            <div class="student-info">
+                <span class="student-name">Student Alpha</span>
+                <span class="student-id">SECURE ID: CM-7701</span>
+            </div>
+            <div class="action-tag">Decrypt</div>
+        </div>
+
+        <div class="row-entry" data-matrix="student2.pdf" data-id="stu_beta">
+            <div class="student-info">
+                <span class="student-name">Student Beta</span>
+                <span class="student-id">SECURE ID: CM-7702</span>
+            </div>
+            <div class="action-tag">Decrypt</div>
+        </div>
+        
+        <div class="row-entry" data-matrix="student3.pdf" data-id="stu_gamma">
+            <div class="student-info">
+                <span class="student-name">Student Gamma</span>
+                <span class="student-id">SECURE ID: CM-7703</span>
+            </div>
+            <div class="action-tag">Decrypt</div>
+        </div>
+    </main>
+
+    <div id="hudOverlay" class="hud-overlay">
+        <div class="terminal-header">
+            <div id="mainframeTitle" class="mainframe-title">Session: Idle</div>
+            <button id="closeFrameBtn" class="close-btn">DISCONNECT</button>
+        </div>
+        <div class="terminal-workspace">
+            <div id="matrixAlert" class="matrix-alert-panel">
+                <div id="typeLine1" class="typing-line line-1">INITIALIZING ACCESS DATA LINK...</div>
+                <div id="typeLine2" class="typing-line line-2">ESTABLISHING PARALLEL PROTOCOLS...</div>
+            </div>
+            <iframe id="coreViewer" class="viewer-viewport" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        /* --- SUPABASE CONNECTIVITY CONFIGURATION --- */
+        const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
+
+        // Initialize Client Interface
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const BUCKET_NAME = 'STUDENTS-RESULT'; // Upper-case to match database custom policy perfectly
+
+        /* --- INTERFACE LOGIC SELECTORS --- */
+        const rows = document.querySelectorAll('.row-entry');
+        const hudOverlay = document.getElementById('hudOverlay');
+        const coreViewer = document.getElementById('coreViewer');
+        const closeFrameBtn = document.getElementById('closeFrameBtn');
+        const mainframeTitle = document.getElementById('mainframeTitle');
+        const matrixAlert = document.getElementById('matrixAlert');
+        const typeLine1 = document.getElementById('typeLine1');
+        const typeLine2 = document.getElementById('typeLine2');
+
+        // Safe Audio Context Generator for Sound Triggers
+        function triggerAudioChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {
+                // Audio context blocked by browser until initial user engagement
+            }
+        }
+
+        /* --- INTERACTION HANDLER --- */
+        rows.forEach(row => {
+            row.addEventListener('click', async () => {
+                triggerAudioChime();
+                
+                const fileName = row.getAttribute('data-matrix');
+                const targetName = row.getAttribute('data-id');
+
+                // Clear layout animation loops first to allow full re-triggering
+                matrixAlert.classList.remove('active');
+                void matrixAlert.offsetWidth; // Force DOM browser layout reflow
+
+                try {
+                    // Step 1: Force download raw stream blob using anon authorization policy token clearance
+                    const { data, error } = await supabase.storage
+                        .from(BUCKET_NAME)
+                        .download(fileName);
+
+                    if (error) throw error;
+
+                    // Step 2: Extract raw bytes data straight into a temporary secure local browser execution object
+                    const blobUrl = URL.createObjectURL(data);
+
+                    // Step 3: Inject stream local URL straight into preview window layout frameset
+                    coreViewer.src = blobUrl;
+                    
+                    // Step 4: Run diagnostic text strings changes
+                    mainframeTitle.textContent = `Session: Secure // Node: ${targetName.toUpperCase()}`;
+                    typeLine1.textContent = `DECRYPTING LOCAL DATA STREAM...`;
+                    typeLine2.textContent = `WELCOME, OPERATOR: ${targetName.toUpperCase()}`;
+
+                    // Step 5: Toggle UI classes to fire transition layers and typewriter code loops
+                    hudOverlay.classList.add('visible');
+                    matrixAlert.classList.add('active');
+
+                } catch (err) {
+                    console.error("Storage Access Exception Failure:", err.message);
+                    
+                    // Fallback Text values to render errors cleanly within the UI styling
+                    mainframeTitle.textContent = `Session: Failed`;
+                    typeLine1.textContent = `ERROR // CRITICAL CONNECTION TERMINATED`;
+                    typeLine2.textContent = `STATUS: FILE UNREADABLE OR BOUNDS EXCEEDED.`;
+                    
+                    coreViewer.src = ""; // Flush broken stream links
+                    hudOverlay.classList.add('visible');
+                    matrixAlert.classList.add('active');
+                }
+            });
+        });
+
+        /* --- DISCONNECT INTERFACE LAYER --- */
+        function clearSession() {
+            hudOverlay.classList.remove('visible');
+            matrixAlert.classList.remove('active');
+            setTimeout(() => {
+                coreViewer.src = "";
+                mainframeTitle.textContent = "Session: Idle";
+            }, 400); 
+        }
+
+        closeFrameBtn.addEventListener('click', clearSession);
+        hudOverlay.addEventListener('click', (event) => {
+            if (event.target === hudOverlay) clearSession();
+        });
+    </script>
+</body>
+</html>
