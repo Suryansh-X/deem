@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassMatrix // Student Portal</title>
+    <title>ClassMatrix // Dynamic Node Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --matrix-green: #00ff66;
-            --matrix-dark-green: #003311;
-            --bg-black: #0a0a0a;
-            --panel-bg: #141414;
-            --border-color: #222222;
+            --matrix-dark-green: #001f0a;
+            --matrix-glow: rgba(0, 255, 102, 0.15);
+            --bg-black: #070708;
+            --panel-bg: #0f0f12;
+            --card-bg: #141418;
+            --border-color: #1f1f26;
+            --text-muted: #71717a;
         }
 
         * {
@@ -25,87 +28,134 @@
             color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             overflow-x: hidden;
-            padding: 20px;
+            padding: 30px 20px;
         }
 
         header {
-            border-bottom: 2px solid var(--matrix-green);
-            padding-bottom: 10px;
-            margin-bottom: 30px;
+            max-width: 1200px;
+            margin: 0 auto 40px auto;
+            border-left: 3px solid var(--matrix-green);
+            padding-left: 20px;
         }
 
         header h1 {
             color: var(--matrix-green);
-            font-size: 1.8rem;
+            font-size: 2rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--matrix-glow);
         }
 
         .subtitle {
-            color: #888888;
+            color: var(--text-muted);
             font-size: 0.9rem;
-            margin-top: 5px;
+            margin-top: 6px;
         }
 
-        /* Roster Table Styles */
-        .roster-container {
+        /* Modernized Custom Matrix Grid Layout */
+        .roster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
             width: 100%;
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+
+        /* Customized Terminal Cards */
+        .card-entry {
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            background: var(--panel-bg);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .row-entry {
+            border-radius: 6px;
+            padding: 20px;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
+            gap: 20px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .row-entry:last-child {
-            border-bottom: none;
+        .card-entry::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--matrix-green);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
         }
 
-        .row-entry:hover {
-            background: var(--matrix-dark-green);
+        .card-entry:hover {
+            transform: translateY(-4px);
             border-color: var(--matrix-green);
-            padding-left: 25px;
+            background: var(--matrix-dark-green);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), 0 0 15px var(--matrix-glow);
+        }
+
+        .card-entry:hover::before {
+            transform: scaleX(1);
         }
 
         .student-info {
             display: flex;
             flex-direction: column;
+            gap: 4px;
         }
 
         .student-name {
             font-weight: bold;
             color: #ffffff;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            word-break: break-all;
         }
 
         .student-id {
-            color: #666666;
-            font-size: 0.85rem;
-            margin-top: 3px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
         }
 
-        .row-entry:hover .student-id {
+        .card-entry:hover .student-id {
             color: var(--matrix-green);
+        }
+
+        .action-container {
+            display: flex;
+            justify-content: flex-end;
         }
 
         .action-tag {
             color: var(--matrix-green);
             border: 1px solid var(--matrix-green);
-            padding: 5px 10px;
+            background: rgba(0, 255, 102, 0.03);
+            padding: 6px 14px;
             font-size: 0.8rem;
-            border-radius: 3px;
+            border-radius: 4px;
             text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .card-entry:hover .action-tag {
+            background: var(--matrix-green);
+            color: #000000;
+        }
+
+        /* System Status Messages */
+        .status-msg {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--matrix-green);
+            padding: 40px;
+            font-size: 1.1rem;
         }
 
         /* Fullscreen Terminal HUD Overlay */
@@ -115,14 +165,14 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(4, 4, 5, 0.96);
             z-index: 1000;
             display: flex;
             flex-direction: column;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease;
-            padding: 20px;
+            transition: opacity 0.35s ease;
+            padding: 25px;
         }
 
         .hud-overlay.visible {
@@ -135,31 +185,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #1a1a1a;
+            background: #121216;
             border: 1px solid var(--matrix-green);
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-bottom: none;
+            border-radius: 4px 4px 0 0;
         }
 
         .mainframe-title {
             color: var(--matrix-green);
             font-weight: bold;
             font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
         .close-btn {
             background: none;
-            border: 1px solid #ff3333;
-            color: #ff3333;
-            padding: 3px 12px;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 4px 14px;
             cursor: pointer;
             font-family: inherit;
             font-size: 0.8rem;
+            border-radius: 3px;
             transition: all 0.2s ease;
         }
 
         .close-btn:hover {
-            background: #ff3333;
+            background: #ef4444;
             color: #000000;
         }
 
@@ -170,17 +223,18 @@
             border: 1px solid var(--matrix-green);
             background: #000000;
             overflow: hidden;
+            border-radius: 0 0 4px 4px;
         }
 
         /* Side Terminal Logs & Typing Alerts */
         .matrix-alert-panel {
-            width: 300px;
+            width: 320px;
             border-right: 1px solid var(--matrix-green);
-            padding: 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            background: #050505;
+            background: #08080a;
         }
 
         .typing-line {
@@ -194,11 +248,11 @@
 
         /* Trigger Typewriter Animations when Active */
         .matrix-alert-panel.active .line-1 {
-            animation: typing 1.5s steps(30, end) forwards;
+            animation: typing 1.2s steps(30, end) forwards;
         }
 
         .matrix-alert-panel.active .line-2 {
-            animation: typing 1.5s steps(30, end) 1.5s forwards, blink 0.75s step-end infinite alternate;
+            animation: typing 1.2s steps(30, end) 1.2s forwards, blink 0.75s step-end infinite alternate;
             border-right-color: var(--matrix-green);
         }
 
@@ -222,7 +276,7 @@
             50% { border-color: var(--matrix-green); }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .terminal-workspace {
                 flex-direction: column;
             }
@@ -231,7 +285,7 @@
                 height: auto;
                 border-right: none;
                 border-bottom: 1px solid var(--matrix-green);
-                padding: 12px;
+                padding: 15px;
             }
         }
     </style>
@@ -243,34 +297,12 @@
     </audio>
 
     <header>
-        <h1>Secure Matrix Node // Results</h1>
-        <div class="subtitle">Select a target parameters profile row terminal to decode documentation stream</div>
+        <h1>Secure Matrix Node // Systems</h1>
+        <div class="subtitle">Dynamic cluster mapping active. Select node grid block to isolate and inspect storage manifests.</div>
     </header>
 
-    <main class="roster-container">
-        <div class="row-entry" data-matrix="student1.pdf" data-id="stu_alpha">
-            <div class="student-info">
-                <span class="student-name">Student Alpha</span>
-                <span class="student-id">SECURE ID: CM-7701</span>
-            </div>
-            <div class="action-tag">Decrypt</div>
-        </div>
-
-        <div class="row-entry" data-matrix="student2.pdf" data-id="stu_beta">
-            <div class="student-info">
-                <span class="student-name">Student Beta</span>
-                <span class="student-id">SECURE ID: CM-7702</span>
-            </div>
-            <div class="action-tag">Decrypt</div>
-        </div>
-        
-        <div class="row-entry" data-matrix="student3.pdf" data-id="stu_gamma">
-            <div class="student-info">
-                <span class="student-name">Student Gamma</span>
-                <span class="student-id">SECURE ID: CM-7703</span>
-            </div>
-            <div class="action-tag">Decrypt</div>
-        </div>
+    <main id="gridTarget" class="roster-grid">
+        <div class="status-msg">SCANNING BACKEND STORAGE VOLUMES...</div>
     </main>
 
     <div id="hudOverlay" class="hud-overlay">
@@ -292,12 +324,11 @@
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
-        // Fix 1: Correct library initialization variable scope
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const BUCKET_NAME = 'STUDENTS-RESULT'; 
 
         /* --- INTERFACE LOGIC SELECTORS --- */
-        const rows = document.querySelectorAll('.row-entry');
+        const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
         const coreViewer = document.getElementById('coreViewer');
         const closeFrameBtn = document.getElementById('closeFrameBtn');
@@ -326,19 +357,77 @@
             } catch(e) {}
         }
 
-        /* --- INTERACTION HANDLER --- */
-        rows.forEach(row => {
-            row.addEventListener('click', async () => {
+        /* --- STEP 1: AUTOMATICALLY FETCH ALL STORAGE FILES --- */
+        async function fetchStorageManifest() {
+            try {
+                // List all objects inside your target bucket directory
+                const { data: files, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .list('', {
+                        limit: 100,
+                        sortBy: { column: 'name', order: 'asc' }
+                    });
+
+                if (error) throw error;
+
+                // Strip system files if empty bucket layout
+                const structuredFiles = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+                if (structuredFiles.length === 0) {
+                    gridTarget.innerHTML = `<div class="status-msg" style="color: #ef4444;">CLUSTER EMPTY // NO MANIFEST ENTIRES READ FROM BUCKET.</div>`;
+                    return;
+                }
+
+                // Empty loading screen placeholder message
+                gridTarget.innerHTML = '';
+
+                // Step 2: Loop files array and inject the modern layout matrix grid blocks
+                structuredFiles.forEach(file => {
+                    // Extract file names cleanly for presentation titles
+                    const cleanTitle = file.name.replace('.pdf', '').replace(/-/g, ' ');
+                    const nodeLabel = file.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+                    const card = document.createElement('div');
+                    card.className = 'card-entry';
+                    card.setAttribute('data-matrix', file.name);
+                    card.setAttribute('data-id', nodeLabel);
+
+                    card.innerHTML = `
+                        <div class="student-info">
+                            <span class="student-name">${cleanTitle}</span>
+                            <span class="student-id">MANIFEST ID: LOC-${Math.floor(1000 + Math.random() * 9000)}</span>
+                        </div>
+                        <div class="action-container">
+                            <div class="action-tag">Isolate</div>
+                        </div>
+                    `;
+
+                    // Connect interaction hooks instantly to the newly generated element node
+                    bindCardEvent(card);
+                    gridTarget.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("Manifest Listing Failure:", err.message);
+                gridTarget.innerHTML = `<div class="status-msg" style="color: #ef4444;">ERROR // FAULT DETECTED IN STORAGE PIPELINE: <br>${err.message}</div>`;
+            }
+        }
+
+        /* --- STEP 3: INTERACTION LOGIC FOR DETACHED DOM INJECTIONS --- */
+        function bindCardEvent(cardElement) {
+            cardElement.addEventListener('click', async () => {
                 triggerAudioChime();
                 
                 if (bgMusic.paused) {
-                    bgMusic.play().catch(err => console.log("BGM playback waiting for user action: ", err.message));
+                    bgMusic.play().catch(err => console.log("BGM loop initialization safe block: ", err.message));
                 }
                 
-                const fileName = row.getAttribute('data-matrix');
-                const targetName = row.getAttribute('data-id');
+                const fileName = cardElement.getAttribute('data-matrix');
+                const targetName = cardElement.getAttribute('data-id');
 
-                // Fix 2: Force HUD overlay visible instantly before network await delays
+                matrixAlert.classList.remove('active');
+                void matrixAlert.offsetWidth; 
+
                 mainframeTitle.textContent = `Connecting...`;
                 typeLine1.textContent = `INITIALIZING ROUTING PASS...`;
                 typeLine2.textContent = `REQUESTING ACCESS KEYS...`;
@@ -363,11 +452,11 @@
                     console.error("Storage Access Exception Failure:", err.message);
                     mainframeTitle.textContent = `Session: Failed`;
                     typeLine1.textContent = `ERROR // CRITICAL CONNECTION TERMINATED`;
-                    typeLine2.textContent = `STATUS: CHECK SUPABASE BUCKET POLICY OVERRIDE.`;
+                    typeLine2.textContent = `STATUS: CHECK STORAGE RLS EXECUTION POLICIES.`;
                     coreViewer.src = ""; 
                 }
             });
-        });
+        }
 
         /* --- DISCONNECT INTERFACE LAYER --- */
         function clearSession() {
@@ -383,7 +472,9 @@
         hudOverlay.addEventListener('click', (event) => {
             if (event.target === hudOverlay) clearSession();
         });
+
+        // Fire auto-scanner initialization immediately upon client document loading completion
+        document.addEventListener('DOMContentLoaded', fetchStorageManifest);
     </script>
 </body>
-    </html>
-    
+</html>
