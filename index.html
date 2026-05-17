@@ -54,7 +54,6 @@
             margin-top: 8px;
         }
 
-        /* Fluid Responsive Grid Layout */
         .roster-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -64,7 +63,6 @@
             margin: 0 auto;
         }
 
-        /* Clean High-End Premium Matrix UI Card Design */
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -75,7 +73,6 @@
             justify-content: space-between;
             gap: 24px;
             cursor: pointer;
-            position: relative;
             transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -121,10 +118,6 @@
             transition: background 0.2s;
         }
 
-        .card-entry:hover .action-tag {
-            background: #7dd3fc;
-        }
-
         .status-msg {
             grid-column: 1 / -1;
             text-align: center;
@@ -134,7 +127,6 @@
             font-weight: 500;
         }
 
-        /* Overlay Viewer Component Layout */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -149,7 +141,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            padding: 30px;
+            padding: 20px;
         }
 
         .hud-overlay.visible {
@@ -191,41 +183,60 @@
             display: flex;
             flex: 1;
             border: 1px solid var(--border-subtle);
-            background: #000000;
+            background: #0d1321;
             border-radius: 0 0 12px 12px;
             overflow: hidden;
+            position: relative;
         }
 
-        .matrix-alert-panel {
-            width: 320px;
-            border-right: 1px solid var(--border-subtle);
-            padding: 30px;
-            background: var(--bg-surface);
+        .viewer-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        .typing-line {
-            color: var(--brand-primary);
-            font-size: 0.9rem;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            width: 0;
-        }
-
-        .matrix-alert-panel.active .line-1 { animation: typing 1s forwards; }
-        .matrix-alert-panel.active .line-2 { animation: typing 1s 1s forwards; }
-
-        .viewer-viewport {
-            flex: 1;
-            background: #ffffff;
+        /* Object container styling to optimize mobile embeds */
+        .pdf-embed-object {
+            width: 100%;
+            height: 100%;
             border: none;
+            background: #ffffff;
         }
 
-        @keyframes typing { to { width: 100% } }
+        /* Premium Mobile Fallback Button UI */
+        .mobile-download-fallback {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            color: var(--text-main);
+            text-align: center;
+            padding: 40px;
+        }
 
-        @media (max-width: 900px) {
-            .terminal-workspace { flex-direction: column; }
-            .matrix-alert-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+        .fallback-btn {
+            background: var(--brand-primary);
+            color: #0b0f19;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1rem;
+            box-shadow: 0 4px 14px var(--brand-glow);
+            transition: transform 0.2s;
+        }
+
+        .fallback-btn:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 768px) {
+            /* If object tags are blocked or empty on narrow viewports, show the optimized click option */
+            .pdf-embed-object { display: block; } 
         }
     </style>
 </head>
@@ -237,7 +248,7 @@
 
     <header>
         <h1>Student Results Dashboard</h1>
-        <div class="subtitle">Select a record layout module card below to map document profiles from data storage safely.</div>
+        <div class="subtitle">Select any individual student card panel below to safely load records from digital storage vault channels.</div>
     </header>
 
     <main id="gridTarget" class="roster-grid" aria-live="polite">
@@ -250,17 +261,20 @@
             <button id="closeFrameBtn" class="close-btn">Close Panel</button>
         </div>
         <div class="terminal-workspace">
-            <div id="matrixAlert" class="matrix-alert-panel">
-                <div id="typeLine1" class="typing-line line-1">Connecting to server...</div>
-                <div id="typeLine2" class="typing-line line-2">Fetching file contents...</div>
+            <div class="viewer-container" id="viewerContainer">
+                <object id="coreViewer" class="pdf-embed-object" type="application/pdf" data="">
+                    <div class="mobile-download-fallback" id="mobileFallback">
+                        <p style="font-size: 1.1rem; color: var(--text-muted);">Mobile Document Viewer Initialization Interrupted</p>
+                        <a id="fallbackLink" class="fallback-btn" href="#" target="_blank">Open PDF File Manually</a>
+                    </div>
+                </object>
             </div>
-            <iframe id="coreViewer" class="viewer-viewport" title="Document Viewer"></iframe>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImaW5vbiIsImlhdCI6MTc3OTA0MjMyOCwiZXhwIjoyMDk0NjE4MzI4fQ.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const BUCKET_NAME = 'students-result'; 
@@ -268,19 +282,18 @@
         const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
         const coreViewer = document.getElementById('coreViewer');
+        const mobileFallback = document.getElementById('mobileFallback');
+        const fallbackLink = document.getElementById('fallbackLink');
         const closeFrameBtn = document.getElementById('closeFrameBtn');
         const mainframeTitle = document.getElementById('mainframeTitle');
-        const matrixAlert = document.getElementById('matrixAlert');
-        const typeLine1 = document.getElementById('typeLine1');
-        const typeLine2 = document.getElementById('typeLine2');
         const bgMusic = document.getElementById('bgMusic');
 
         let activeTriggerElement = null;
+        let currentBlobUrl = null;
 
         function renderCards(filesArray) {
             gridTarget.innerHTML = '';
             filesArray.forEach(file => {
-                // Strips extensions, downcases for lookups, replaces spaces safely
                 const cleanTitle = file.name.replace('.pdf', '').replace('.PDF', '').replace(/-/g, ' ').replace(/_/g, ' ').toLowerCase();
                 const nodeLabel = file.name.replace(/[^a-zA-Z0-9]/g, '_');
 
@@ -312,58 +325,27 @@
                     .list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
 
                 if (error) throw error;
-
                 const structuredFiles = files.filter(f => f.name !== '.emptyFolderPlaceholder');
-
-                if (structuredFiles.length === 0) {
-                    useFallbackList();
-                    return;
-                }
-
+                if (structuredFiles.length === 0) { useFallbackList(); return; }
                 renderCards(structuredFiles);
-
             } catch (err) {
-                console.warn("Directory auto scanning policy restricted. Activating fallback mapping index structure.", err.message);
                 useFallbackList();
             }
         }
 
-        // EXACT NAMES POPULATED FROM YOUR SNAPSHOT IMAGES (All properly capitalized to ensure perfect lookups)
         function useFallbackList() {
             const explicitUserFiles = [
-                { name: 'AALEKH.pdf' },
-                { name: 'AKSHIT.pdf' },
-                { name: 'ANIRUDH VIJ.pdf' },
-                { name: 'ARMAN.pdf' },
-                { name: 'DHARUN.pdf' },
-                { name: 'GAURY.pdf' },
-                { name: 'GURLEEN K.pdf' },
-                { name: 'GURNOOR.pdf' },
-                { name: 'HARSHOUN.pdf' },
-                { name: 'HARTEJ.pdf' },
-                { name: 'HEYMAN.pdf' },
-                { name: 'ISH KAUR.pdf' },
-                { name: 'ISH SINGH.pdf' },
-                { name: 'JAPNEET.pdf' },
-                { name: 'JASKARAN.pdf' },
-                { name: 'JASWINDERK.pdf' },
-                { name: 'MOULI.pdf' },
-                { name: 'PRAB - FAT.pdf' },
-                { name: 'PRAB - ATHLETE.pdf' },
-                { name: 'RAGHUNANDAN.pdf' },
-                { name: 'RANTESH.pdf' },
-                { name: 'ROHAAN SAINI.pdf' },
-                { name: 'ROHANPREET.pdf' },
-                { name: 'SACHIN.pdf' },
-                { name: 'SAMIK.pdf' },
-                { name: 'SANIKA.pdf' },
-                { name: 'SHAVETA.pdf' },
-                { name: 'SHEFALI.pdf' },
-                { name: 'SUKHNOOR.pdf' },
-                { name: 'SURYANSH.pdf' },
-                { name: 'TANVEER.pdf' },
-                { name: 'THAKUR ADITYA RANA.pdf' },
-                { name: 'UDAY OHRI.pdf' }
+                { name: 'AALEKH.pdf' }, { name: 'AKSHIT.pdf' }, { name: 'ANIRUDH VIJ.pdf' },
+                { name: 'ARMAN.pdf' }, { name: 'DHARUN.pdf' }, { name: 'GAURY.pdf' },
+                { name: 'GURLEEN K.pdf' }, { name: 'GURNOOR.pdf' }, { name: 'HARSHOUN.pdf' },
+                { name: 'HARTEJ.pdf' }, { name: 'HEYMAN.pdf' }, { name: 'ISH KAUR.pdf' },
+                { name: 'ISH SINGH.pdf' }, { name: 'JAPNEET.pdf' }, { name: 'JASKARAN.pdf' },
+                { name: 'JASWINDERK.pdf' }, { name: 'MOULI.pdf' }, { name: 'PRAB - FAT.pdf' },
+                { name: 'PRAB - ATHLETE.pdf' }, { name: 'RAGHUNANDAN.pdf' }, { name: 'RANTESH.pdf' },
+                { name: 'ROHAAN SAINI.pdf' }, { name: 'ROHANPREET.pdf' }, { name: 'SACHIN.pdf' },
+                { name: 'SAMIK.pdf' }, { name: 'SANIKA.pdf' }, { name: 'SHAVETA.pdf' },
+                { name: 'SHEFALI.pdf' }, { name: 'SUKHNOOR.pdf' }, { name: 'SURYANSH.pdf' },
+                { name: 'TANVEER.pdf' }, { name: 'THAKUR ADITYA RANA.pdf' }, { name: 'UDAY OHRI.pdf' }
             ];
             renderCards(explicitUserFiles);
         }
@@ -376,14 +358,9 @@
                 const fileName = cardElement.getAttribute('data-matrix');
                 const targetName = cardElement.getAttribute('data-id');
 
-                matrixAlert.classList.remove('active');
-                void matrixAlert.offsetWidth; 
-
-                mainframeTitle.textContent = `Connecting...`;
-                typeLine1.textContent = `Validating unique security identifiers...`;
-                typeLine2.textContent = `Streaming file buffers safely...`;
+                mainframeTitle.textContent = `Connecting Secure Vault...`;
+                mobileFallback.style.display = "none";
                 hudOverlay.classList.add('visible');
-                matrixAlert.classList.add('active');
 
                 try {
                     const { data, error } = await supabaseClient.storage
@@ -392,15 +369,31 @@
 
                     if (error) throw error;
 
-                    const blobUrl = URL.createObjectURL(data);
-                    coreViewer.src = blobUrl;
-                    mainframeTitle.textContent = `Document Open: ${targetName.toUpperCase()}`;
+                    // Clean old memory allocations safely
+                    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+
+                    currentBlobUrl = URL.createObjectURL(data);
+                    
+                    // Force display adjustments directly onto the object element wrapper
+                    coreViewer.removeAttribute('data');
+                    coreViewer.setAttribute('data', currentBlobUrl);
+                    
+                    fallbackLink.href = currentBlobUrl;
+                    mobileFallback.style.display = "flex"; 
+                    
+                    mainframeTitle.textContent = `Profile Sheet Open: ${targetName.toUpperCase().replace(/_/g, ' ')}`;
+
+                    // SMART AUTO-REDIRECT FOR MOBILE:
+                    // If the user is viewing on a tiny touch dashboard, open the PDF tab view automatically 
+                    if (window.innerWidth < 768) {
+                        window.open(currentBlobUrl, '_blank');
+                    }
 
                 } catch (err) {
                     mainframeTitle.textContent = `Access Failed`;
-                    typeLine1.textContent = `File request initialization broke.`;
-                    typeLine2.textContent = `Verify item "${fileName}" exists natively inside storage.`;
-                    coreViewer.src = "";
+                    mobileFallback.style.display = "flex";
+                    fallbackLink.textContent = "Error Loading Asset Buffer";
+                    fallbackLink.href = "#";
                 }
             };
 
@@ -410,8 +403,11 @@
 
         function clearSession() {
             hudOverlay.classList.remove('visible');
-            matrixAlert.classList.remove('active');
-            setTimeout(() => { coreViewer.src = ""; if (activeTriggerElement) activeTriggerElement.focus(); }, 400); 
+            setTimeout(() => { 
+                coreViewer.setAttribute('data', ''); 
+                if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
+                if (activeTriggerElement) activeTriggerElement.focus(); 
+            }, 400); 
         }
 
         closeFrameBtn.addEventListener('click', clearSession);
