@@ -409,7 +409,8 @@
 
     <script>
         const SUPABASE_URL = 'https://jnoukcxlbslsyieqbvtr.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImaW5vbiIsImlhdCI6MT77OTA0MjMyOCwiZXhwIjoyMDk0NjE4MzI4fQ.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
+        // Corrected token sequence below
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impub3VrY3hsYnNsc3lpZXFidnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDIzMjgsImV4cCI6MjA5NDYxODMyOH0.RfJGDu8tF9v3hzWrAzyKxGypxR2iUUWY15u5T8wyKZg'; 
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const BUCKET_NAME = 'students-result'; 
@@ -433,7 +434,6 @@
         let activeTriggerElement = null;
         let currentBlobUrl = null;
 
-        // Optimized Gateway Validation Engine
         async function verifyAccessKey() {
             const userInput = passphraseInput.value.trim();
             if(!userInput) return;
@@ -443,7 +443,6 @@
             authErrorLog.style.display = "none";
 
             try {
-                // Try RPC first, fallback directly to table checking if RPC policy blocks it
                 let isValid = false;
                 
                 const { data: rpcData, error: rpcError } = await supabaseClient
@@ -452,7 +451,6 @@
                 if (!rpcError && rpcData === true) {
                     isValid = true;
                 } else {
-                    // Direct table backup query
                     const { data: tableData, error: tableError } = await supabaseClient
                         .from('app_config')
                         .select('key_value')
