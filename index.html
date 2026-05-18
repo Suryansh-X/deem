@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassMatrix Dashboard</title>
+    <title>ClassMatrix // Student Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -56,13 +56,14 @@
 
         .auth-box {
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             background: #070a12;
-            padding: 40px 30px;
+            padding: 35px 25px;
             border-radius: 16px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
             position: relative;
+            /* Using a clean pseudo-element approach for the slow RGB border to eliminate overlap glitches */
             border: 2px solid transparent;
             background-image: linear-gradient(#070a12, #070a12), linear-gradient(0deg, #ff0055, #0099ff, #00ff66, #ff0055);
             background-origin: border-box;
@@ -82,18 +83,22 @@
             font-weight: 800;
             margin-bottom: 10px;
             letter-spacing: -0.5px;
+            color: #ffffff;
         }
 
         .auth-box p {
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 25px;
+            line-height: 1.4;
         }
 
         .auth-form {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            position: relative;
+            z-index: 5;
         }
 
         .auth-input {
@@ -107,6 +112,7 @@
             text-align: center;
             outline: none;
             transition: border-color 0.2s;
+            -webkit-appearance: none;
         }
 
         .auth-input:focus {
@@ -124,6 +130,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: opacity 0.2s;
+            display: block;
         }
 
         .auth-btn:disabled {
@@ -134,8 +141,9 @@
         .auth-error {
             color: var(--error-main);
             font-size: 0.85rem;
-            margin-top: 10px;
+            margin-top: 15px;
             display: none;
+            font-weight: 500;
         }
 
         /* --- Main Dashboard View Wrapper --- */
@@ -415,8 +423,9 @@
         let activeTriggerElement = null;
         let currentBlobUrl = null;
 
-        // Secure RPC Verification Function (Perfect for Public Repos)
+        // Secure RPC Verification Function
         async function verifyAccessKey() {
+            // Trim whitespace to ensure clean string submission
             const userInput = passphraseInput.value.trim();
             if(!userInput) return;
 
@@ -425,14 +434,14 @@
             authErrorLog.style.display = "none";
 
             try {
-                // Call the secure database function via RPC instead of querying tables directly
+                // Call the secure remote procedure function
                 const { data: isValid, error } = await supabaseClient
                     .rpc('verify_secure_password', { user_input: userInput });
 
                 if (error) throw error;
 
                 if (isValid === true) {
-                    // Success: Remove auth screen and mount dashboard components
+                    // Success Transition
                     authOverlay.style.opacity = '0';
                     authOverlay.style.pointerEvents = 'none';
                     dashboardWrapper.style.display = 'block';
