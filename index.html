@@ -7,19 +7,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-base: #0b0f19;
-            --bg-surface: #131b2e;
-            --bg-card: #1e2942;
-            --border-subtle: #2d3d63;
+            --bg-base: #060913;
+            --bg-surface: #0b1120;
+            --bg-card: #111a2e;
+            --border-subtle: rgba(255, 255, 255, 0.08);
             --brand-primary: #38bdf8;
-            --brand-glow: rgba(56, 189, 248, 0.25);
+            --brand-glow: rgba(56, 189, 248, 0.15);
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-muted: #64748b;
             --error-main: #f87171;
         }
 
         *:focus-visible {
-            outline: 3px solid var(--brand-primary);
+            outline: 2px solid var(--brand-primary);
             outline-offset: 4px;
         }
 
@@ -38,7 +38,7 @@
             overflow-x: hidden;
         }
 
-        /* --- Secure Gate Gateway UI --- */
+        /* --- Modernized Secure Gateway UI --- */
         .auth-overlay {
             position: fixed;
             top: 0;
@@ -50,38 +50,39 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 24px;
             transition: opacity 0.5s ease, pointer-events 0.5s ease;
         }
 
         .auth-box {
             width: 100%;
-            max-width: 420px;
-            background: #070a12;
-            padding: 35px 25px;
-            border-radius: 16px;
+            max-width: 400px;
+            background: #090d16;
+            padding: 40px 32px;
+            border-radius: 24px; /* Smoother, modernized corners */
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             position: relative;
-            /* Using a clean pseudo-element approach for the slow RGB border to eliminate overlap glitches */
-            border: 2px solid transparent;
-            background-image: linear-gradient(#070a12, #070a12), linear-gradient(0deg, #ff0055, #0099ff, #00ff66, #ff0055);
+            
+            /* Modern, Ultra-Thin Linear Gradient Border */
+            border: 1px solid transparent;
+            background-image: linear-gradient(#090d16, #090d16), linear-gradient(135deg, #1e293b, #38bdf8, #0369a1, #1e293b);
             background-origin: border-box;
             background-clip: content-box, border-box;
-            background-size: 100% 100%, 100% 400%;
-            animation: subtleRGB 12s linear infinite;
+            background-size: 100% 100%, 400% 100%;
+            animation: gradientShift 8s ease infinite;
         }
 
-        @keyframes subtleRGB {
-            0% { background-position: 0% 0%, 0% 0%; }
-            50% { background-position: 0% 0%, 0% 100%; }
-            100% { background-position: 0% 0%, 0% 0%; }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%, 0% 50%; }
+            50% { background-position: 0% 50%, 100% 50%; }
+            100% { background-position: 0% 50%, 0% 50%; }
         }
 
         .auth-box h2 {
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
             letter-spacing: -0.5px;
             color: #ffffff;
         }
@@ -89,61 +90,71 @@
         .auth-box p {
             color: var(--text-muted);
             font-size: 0.9rem;
-            margin-bottom: 25px;
-            line-height: 1.4;
+            margin-bottom: 32px;
+            line-height: 1.5;
         }
 
         .auth-form {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            position: relative;
-            z-index: 5;
         }
 
         .auth-input {
             width: 100%;
-            padding: 14px 16px;
-            background: #131b2e;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-subtle);
-            border-radius: 8px;
+            border-radius: 12px; /* Matching softer corners */
             color: #ffffff;
             font-size: 1rem;
             text-align: center;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
             -webkit-appearance: none;
         }
 
         .auth-input:focus {
-            border-color: var(--brand-primary);
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
         }
 
         .auth-btn {
             width: 100%;
             padding: 14px;
-            background: var(--brand-primary);
-            color: #0b0f19;
+            background: #ffffff; /* Modern clean solid button contrast */
+            color: #000000;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 700;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s;
-            display: block;
+            transition: all 0.2s ease;
+        }
+
+        .auth-btn:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .auth-btn:active {
+            transform: translateY(0);
         }
 
         .auth-btn:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
         .auth-error {
             color: var(--error-main);
             font-size: 0.85rem;
-            margin-top: 15px;
+            margin-top: 16px;
             display: none;
             font-weight: 500;
+            letter-spacing: 0.2px;
         }
 
         /* --- Main Dashboard View Wrapper --- */
@@ -180,7 +191,7 @@
         .card-entry {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
             display: flex;
             flex-direction: column;
@@ -247,8 +258,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(7, 10, 18, 0.95);
-            backdrop-filter: blur(8px);
+            background: rgba(4, 6, 12, 0.95);
+            backdrop-filter: blur(12px);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -270,7 +281,7 @@
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             padding: 16px 24px;
-            border-radius: 12px 12px 0 0;
+            border-radius: 16px 16px 0 0;
         }
 
         .mainframe-title {
@@ -284,7 +295,7 @@
             padding: 6px 16px;
             cursor: pointer;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
 
@@ -297,8 +308,8 @@
             display: flex;
             flex: 1;
             border: 1px solid var(--border-subtle);
-            background: #0d1321;
-            border-radius: 0 0 12px 12px;
+            background: #090d16;
+            border-radius: 0 0 16px 16px;
             overflow: hidden;
             position: relative;
         }
@@ -425,7 +436,6 @@
 
         // Secure RPC Verification Function
         async function verifyAccessKey() {
-            // Trim whitespace to ensure clean string submission
             const userInput = passphraseInput.value.trim();
             if(!userInput) return;
 
@@ -434,14 +444,12 @@
             authErrorLog.style.display = "none";
 
             try {
-                // Call the secure remote procedure function
                 const { data: isValid, error } = await supabaseClient
                     .rpc('verify_secure_password', { user_input: userInput });
 
                 if (error) throw error;
 
                 if (isValid === true) {
-                    // Success Transition
                     authOverlay.style.opacity = '0';
                     authOverlay.style.pointerEvents = 'none';
                     dashboardWrapper.style.display = 'block';
