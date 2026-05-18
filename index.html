@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassMatrix // Student Dashboard</title>
+    <title>ClassMatrix Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -35,6 +35,112 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.5;
             padding: 40px 20px;
+            overflow-x: hidden;
+        }
+
+        /* --- Secure Gate Gateway UI --- */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s ease, pointer-events 0.5s ease;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 450px;
+            background: #070a12;
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            position: relative;
+            border: 2px solid transparent;
+            background-image: linear-gradient(#070a12, #070a12), linear-gradient(0deg, #ff0055, #0099ff, #00ff66, #ff0055);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            background-size: 100% 100%, 100% 400%;
+            animation: subtleRGB 12s linear infinite;
+        }
+
+        @keyframes subtleRGB {
+            0% { background-position: 0% 0%, 0% 0%; }
+            50% { background-position: 0% 0%, 0% 100%; }
+            100% { background-position: 0% 0%, 0% 0%; }
+        }
+
+        .auth-box h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-box p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #131b2e;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .auth-input:focus {
+            border-color: var(--brand-primary);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--brand-primary);
+            color: #0b0f19;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .auth-error {
+            color: var(--error-main);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* --- Main Dashboard View Wrapper --- */
+        .dashboard-wrapper {
+            display: none;
         }
 
         header {
@@ -198,7 +304,6 @@
             justify-content: center;
         }
 
-        /* Object container styling to optimize mobile embeds */
         .pdf-embed-object {
             width: 100%;
             height: 100%;
@@ -206,7 +311,6 @@
             background: #ffffff;
         }
 
-        /* Premium Mobile Fallback Button UI */
         .mobile-download-fallback {
             display: none;
             flex-direction: column;
@@ -235,39 +339,52 @@
         }
 
         @media (max-width: 768px) {
-            /* If object tags are blocked or empty on narrow viewports, show the optimized click option */
             .pdf-embed-object { display: block; } 
         }
     </style>
 </head>
 <body>
 
-    <audio id="bgMusic" loop preload="auto">
-        <source src="Senorita __ Zindagi Na Milegi Dobara __ Cello Instrumental Cover __ wwwsoundspiritin.mp3" type="audio/mpeg">
-    </audio>
-
-    <header>
-        <h1>Student Results Dashboard</h1>
-        <div class="subtitle">Select any individual student card panel below to safely load records from digital storage vault channels.</div>
-    </header>
-
-    <main id="gridTarget" class="roster-grid" aria-live="polite">
-        <div class="status-msg">Scanning active storage volumes...</div>
-    </main>
-
-    <div id="hudOverlay" class="hud-overlay" role="dialog" aria-modal="true">
-        <div class="terminal-header">
-            <div id="mainframeTitle" class="mainframe-title">Documents Vault</div>
-            <button id="closeFrameBtn" class="close-btn">Close Panel</button>
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <h2>Secure Gateway</h2>
+            <p>Enter authorization key to open ClassMatrix storage nodes.</p>
+            <div class="auth-form">
+                <input type="password" id="passphraseInput" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+                <button id="authSubmitBtn" class="auth-btn">Verify Credentials</button>
+            </div>
+            <div id="authErrorLog" class="auth-error">Access Denied: Invalid Key Token</div>
         </div>
-        <div class="terminal-workspace">
-            <div class="viewer-container" id="viewerContainer">
-                <object id="coreViewer" class="pdf-embed-object" type="application/pdf" data="">
-                    <div class="mobile-download-fallback" id="mobileFallback">
-                        <p style="font-size: 1.1rem; color: var(--text-muted);">Mobile Document Viewer Initialization Interrupted</p>
-                        <a id="fallbackLink" class="fallback-btn" href="#" target="_blank">Open PDF File Manually</a>
-                    </div>
-                </object>
+    </div>
+
+    <div id="dashboardWrapper" class="dashboard-wrapper">
+        <audio id="bgMusic" loop preload="auto">
+            <source src="Senorita __ Zindagi Na Milegi Dobara __ Cello Instrumental Cover __ wwwsoundspiritin.mp3" type="audio/mpeg">
+        </audio>
+
+        <header>
+            <h1>Student Results Dashboard</h1>
+            <div class="subtitle">Select any individual student card panel below to safely load records from digital storage vault channels.</div>
+        </header>
+
+        <main id="gridTarget" class="roster-grid" aria-live="polite">
+            <div class="status-msg">Scanning active storage volumes...</div>
+        </main>
+
+        <div id="hudOverlay" class="hud-overlay" role="dialog" aria-modal="true">
+            <div class="terminal-header">
+                <div id="mainframeTitle" class="mainframe-title">Documents Vault</div>
+                <button id="closeFrameBtn" class="close-btn">Close Panel</button>
+            </div>
+            <div class="terminal-workspace">
+                <div class="viewer-container" id="viewerContainer">
+                    <object id="coreViewer" class="pdf-embed-object" type="application/pdf" data="">
+                        <div class="mobile-download-fallback" id="mobileFallback">
+                            <p style="font-size: 1.1rem; color: var(--text-muted);">Mobile Document Viewer Initialization Interrupted</p>
+                            <a id="fallbackLink" class="fallback-btn" href="#" target="_blank">Open PDF File Manually</a>
+                        </div>
+                    </object>
+                </div>
             </div>
         </div>
     </div>
@@ -278,6 +395,13 @@
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const BUCKET_NAME = 'students-result'; 
+
+        // DOM Elements
+        const authOverlay = document.getElementById('authOverlay');
+        const dashboardWrapper = document.getElementById('dashboardWrapper');
+        const passphraseInput = document.getElementById('passphraseInput');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authErrorLog = document.getElementById('authErrorLog');
 
         const gridTarget = document.getElementById('gridTarget');
         const hudOverlay = document.getElementById('hudOverlay');
@@ -290,6 +414,44 @@
 
         let activeTriggerElement = null;
         let currentBlobUrl = null;
+
+        // Secure RPC Verification Function (Perfect for Public Repos)
+        async function verifyAccessKey() {
+            const userInput = passphraseInput.value.trim();
+            if(!userInput) return;
+
+            authSubmitBtn.textContent = "Verifying...";
+            authSubmitBtn.disabled = true;
+            authErrorLog.style.display = "none";
+
+            try {
+                // Call the secure database function via RPC instead of querying tables directly
+                const { data: isValid, error } = await supabaseClient
+                    .rpc('verify_secure_password', { user_input: userInput });
+
+                if (error) throw error;
+
+                if (isValid === true) {
+                    // Success: Remove auth screen and mount dashboard components
+                    authOverlay.style.opacity = '0';
+                    authOverlay.style.pointerEvents = 'none';
+                    dashboardWrapper.style.display = 'block';
+                    
+                    fetchStorageManifest();
+                    setTimeout(() => { authOverlay.remove(); }, 500);
+                } else {
+                    throw new Error("Invalid Credentials");
+                }
+            } catch (err) {
+                authErrorLog.style.display = "block";
+                passphraseInput.value = "";
+                authSubmitBtn.textContent = "Verify Credentials";
+                authSubmitBtn.disabled = false;
+            }
+        }
+
+        authSubmitBtn.addEventListener('click', verifyAccessKey);
+        passphraseInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyAccessKey(); });
 
         function renderCards(filesArray) {
             gridTarget.innerHTML = '';
@@ -369,12 +531,10 @@
 
                     if (error) throw error;
 
-                    // Clean old memory allocations safely
                     if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
 
                     currentBlobUrl = URL.createObjectURL(data);
                     
-                    // Force display adjustments directly onto the object element wrapper
                     coreViewer.removeAttribute('data');
                     coreViewer.setAttribute('data', currentBlobUrl);
                     
@@ -383,8 +543,6 @@
                     
                     mainframeTitle.textContent = `Profile Sheet Open: ${targetName.toUpperCase().replace(/_/g, ' ')}`;
 
-                    // SMART AUTO-REDIRECT FOR MOBILE:
-                    // If the user is viewing on a tiny touch dashboard, open the PDF tab view automatically 
                     if (window.innerWidth < 768) {
                         window.open(currentBlobUrl, '_blank');
                     }
@@ -412,8 +570,6 @@
 
         closeFrameBtn.addEventListener('click', clearSession);
         window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && hudOverlay.classList.contains('visible')) clearSession(); });
-        document.addEventListener('DOMContentLoaded', fetchStorageManifest);
     </script>
 </body>
-    </html>
-    
+</html>
